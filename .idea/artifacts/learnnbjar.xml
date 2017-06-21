@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="learnnbjar">
+    <output-path>$PROJECT_DIR$/out/artifacts/learnnbjar</output-path>
+    <root id="archive" name="learnnb.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/src/learnnb/META-INF/MANIFEST.MF" />
+      </element>
+      <element id="module-output" name="scala210" />
+    </root>
+  </artifact>
+</component>

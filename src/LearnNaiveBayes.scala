@@ -1,4 +1,4 @@
-import TestNaiveBayes.RawDataRecord
+
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer}
 import org.apache.spark.mllib.classification.NaiveBayes
@@ -17,18 +17,19 @@ object LearnNaiveBayes {
 
     //   val conf = new SparkConf().setMaster("yarn-client")
     //   val conf = new SparkConf().setAppName("TestNaiveBayes").setMaster("spark://master:7077")
-    val conf = new SparkConf().setAppName("TestNaiveBayes").setMaster("local[*]")
+    val conf = new SparkConf().setAppName("LearnNaiveBayes").setMaster("local[*]")
     val sc = new SparkContext(conf)
 
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
     import sqlContext.implicits._
-    var tarinpath = "file://" + args(0)
+//    var tarinpath = "file://" + args(0)
+    var tarinpath = "file:///upload/testtrain"
     var trainRDD = sc.textFile(tarinpath).map {
       x =>
         var data = x.split(",")
         RawDataRecord(data(0),data(1))
     }
-    var testpath = "file://" + args(1)
+    var testpath = "file:///upload/testdata"
     var testRDD = sc.textFile(testpath).map {
       x =>
         var data = x.split(",")
@@ -38,7 +39,7 @@ object LearnNaiveBayes {
  //   val splits = srcRDD.randomSplit(Array(0.7, 0.3))
     var trainingDF = trainRDD.toDF()
     var testDF = testRDD.toDF()
-    println(testDF.count())
+ //   println(testDF.count())
     //将词语转换成数组
     var tokenizer = new Tokenizer().setInputCol("text").setOutputCol("words")
     var wordsData = tokenizer.transform(trainingDF)
@@ -80,14 +81,17 @@ object LearnNaiveBayes {
     }
 
     //对测试数据集使用训练模型进行分类预测
-    val testpredictionAndLabel = testDataRdd.map(p => (model.predict(p.features), p.label))
+    val testpredictionAndLabel1 = testDataRdd.map(p => (model.predict(p.features), p.label))
+    val testpredictionAndLabel = testDataRdd.map(p => (model.predictProbabilities(p.features), p.label))
 
     //统计分类准确率
     testpredictionAndLabel.foreach(println)
+    println("result")
+    testpredictionAndLabel1.foreach(println)
   //  println(testpredictionAndLabel.count())
-    var testaccuracy = 1.0 * testpredictionAndLabel.filter(x => x._1 == x._2).count() / testDataRdd.count()
-    println("output5：")
-    println(testaccuracy)
+ //   var testaccuracy = 1.0 * testpredictionAndLabel.filter(x => x._1 == x._2).count() / testDataRdd.count()
+  //  println("output5：")
+  //  println(testaccuracy)
 
   }
 

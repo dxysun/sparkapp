@@ -16,15 +16,13 @@ object Streaming {
  //   val sparkConf = new SparkConf().setAppName("Streaming").setMaster("spark://master:7077")
 //    val sparkConf = new SparkConf().setAppName("Streaming").setMaster("yarn-client")
     val sparkConf = new SparkConf().setAppName("Streamimg").setMaster("local[*]")
-//    val sparkConf = new SparkConf().setAppName("Streaming").setMaster("spark://ambari:7077")
-    val ssc = new StreamingContext(sparkConf, Seconds(10))
+ //   val sparkConf = new SparkConf().setAppName("Streaming").setMaster("spark://ambari:7077")
+    val ssc = new StreamingContext(sparkConf, Seconds(5))
 //    val conf = new SparkConf().setAppName("TestNaiveBayes").setMaster("spark://ambari:7077 ")
-//   val sc = new SparkContext(conf)
     val sc = ssc.sparkContext
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
     import sqlContext.implicits._
-    var tarinpath = "file:///upload/train/"
- //   var tarinpath = "hdfs://master:9000/upload/train/"
+    var tarinpath = "file:///upload/train/phonedata"
     var trainRDD = sc.textFile(tarinpath).map {
       x =>
         var data = x.split(",")
@@ -64,8 +62,6 @@ object Streaming {
     println("train finished")
 
 
-
-
     // 指定监控的目录
   //  val lines = ssc.textFileStream("hdfs://master:9000/upload/source")
     val lines = ssc.textFileStream("file:///upload/source")
@@ -100,7 +96,6 @@ object Streaming {
       println("output5：")
    //   println(testaccuracy)
     }
-
     // 启动Streaming
     println("启动Streaming")
     ssc.start()

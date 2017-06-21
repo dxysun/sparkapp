@@ -14,13 +14,15 @@ object Sqlstreaming {
   case class RawDataRecord(category: String, text: String)
   def main(args: Array[String]) {
     val sparkConf = new SparkConf().setAppName("Streamimg").setMaster("local[*]")
-    val ssc = new StreamingContext(sparkConf, Seconds(10))
+  //  val sparkConf = new SparkConf().setAppName("Streaming").setMaster("spark://ambari:7077")
+    val ssc = new StreamingContext(sparkConf, Seconds(2))
     //    val conf = new SparkConf().setAppName("TestNaiveBayes").setMaster("local[*]")
     //   val sc = new SparkContext(conf)
     val sc = ssc.sparkContext
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
     import sqlContext.implicits._
-    var tarinpath = "file:///upload/train/"
+//    var tarinpath = "file:///upload/train/"
+    var tarinpath = "hdfs://master:9000/upload/train/"
     var trainRDD = sc.textFile(tarinpath).map {
       x =>
         var data = x.split(",")
@@ -62,8 +64,8 @@ object Sqlstreaming {
 
     val schema = StructType(List(StructField("predict", DoubleType, true),StructField("label", DoubleType, true)))
     val prop = new Properties()
-    prop.put("user", "hadoop") //表示用户名是hadoop
-    prop.put("password", "hadoop") //表示密码是hadoop
+    prop.put("user", "root") //表示用户名是hadoop
+    prop.put("password", "toor") //表示密码是hadoop
     prop.put("driver","com.mysql.jdbc.Driver") //表示驱动程序是com.mysql.jdbc.Driver
 /*    val studentRDD = sc.parallelize(Array("3 Rongcheng M 26","4 Guanhua M 27")).map(_.split(" "))
     //下面要设置模式信息
@@ -82,7 +84,9 @@ object Sqlstreaming {
 */
 
     // 指定监控的目录
-    val lines = ssc.textFileStream("file:///upload/source").map {
+//    var testpath = "file:///upload/source"
+    var testpath = "hdfs://master:9000/upload/source/"
+    val lines = ssc.textFileStream(testpath).map {
       x =>
         var data = x.split(",")
         RawDataRecord(data(0),data(1))
@@ -105,7 +109,7 @@ object Sqlstreaming {
       testpredictionAndLabel.foreach(println)
       val rowRDD1 = testpredictionAndLabel.map(x => Row(x._1.toDouble,x._2.toDouble))
       val resultFrame = sqlContext.createDataFrame(rowRDD1, schema)
-      resultFrame.write.mode("append").jdbc("jdbc:mysql://localhost:3306/hadoop?useSSL=false", "hadoop.result", prop)
+      resultFrame.write.mode("append").jdbc("jdbc:mysql://master:3306/spark?useSSL=false", "spark.result", prop)
       //  println(testpredictionAndLabel.count())
       var testaccuracy = 1.0 * testpredictionAndLabel.filter(x => x._1 == x._2).count() / testDataRdd.count()
       println("output5：")

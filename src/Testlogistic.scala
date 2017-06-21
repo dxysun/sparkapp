@@ -14,7 +14,6 @@ object Testlogistic {
   case class RawDataRecord(category: String, text: String)
 
   def main(args : Array[String]) {
-
     //   val conf = new SparkConf().setMaster("yarn-client")
     //   val conf = new SparkConf().setAppName("TestNaiveBayes").setMaster("spark://master:7077")
     val conf = new SparkConf().setAppName("TestNaiveBayes").setMaster("local[*]")
@@ -60,7 +59,6 @@ object Testlogistic {
         LabeledPoint(label.toDouble, Vectors.dense(features.toArray))
     }
     println("output4：")
-
 
     //训练模型
     val model = new LogisticRegressionWithLBFGS().setNumClasses(2).run(trainDataRdd)

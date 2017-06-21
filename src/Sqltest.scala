@@ -15,14 +15,16 @@ import org.apache.spark.streaming.{Seconds, StreamingContext}
 object Sqltest {
   case class RawDataRecord(category: String, text: String)
   def main(args: Array[String]) {
-    val sparkConf = new SparkConf().setAppName("Streamimg").setMaster("local[*]")
+    val sparkConf = new SparkConf().setAppName("Sqltest").setMaster("local[*]")
+  //  val sparkConf = new SparkConf().setAppName("Streaming").setMaster("spark://ambari:7077")
     val ssc = new StreamingContext(sparkConf, Seconds(1))
     //    val conf = new SparkConf().setAppName("TestNaiveBayes").setMaster("local[*]")
     //   val sc = new SparkContext(conf)
     val sc = ssc.sparkContext
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
     import sqlContext.implicits._
-    var tarinpath = "file:///upload/train/"
+    var tarinpath = "hdfs://master:9000/upload/train/"
+    //var tarinpath = "file:///upload/train/"
     var trainRDD = sc.textFile(tarinpath).map {
       x =>
         var data = x.split(",")
@@ -43,7 +45,6 @@ object Sqltest {
     println("output2：")
 
 
-
     //计算每个词的TF-IDF
     var idf = new IDF().setInputCol("rawFeatures").setOutputCol("features")
     var idfModel = idf.fit(featurizedData)
@@ -56,25 +57,32 @@ object Sqltest {
       case Row(label: String, features: Vector) =>
         LabeledPoint(label.toDouble, Vectors.dense(features.toArray))
     }
-    var trainDataRdd1 = rescaledData.select($"category",$"features").map {
+   /* var trainDataRdd1 = rescaledData.select($"category",$"features").map {
       case Row(label: String, features: Vector) =>
         LabeledPoint(label.toDouble, Vectors.dense(features.toArray))
 
-    }
+    }*/
     println("output4：")
 
     //训练模型
     val model = NaiveBayes.train(trainDataRdd, lambda = 1.0, modelType = "multinomial")
     println("train finished")
+
+
+
     val schema = StructType(List(StructField("filename", StringType, true),StructField("content", StringType, true),StructField("filetype", DoubleType, true)))
 
     val prop = new Properties()
-    prop.put("user", "hadoop") //表示用户名是hadoop
-    prop.put("password", "hadoop") //表示密码是hadoop
+    prop.put("user", "root") //表示用户名是hadoop
+    prop.put("password", "toor") //表示密码是hadoop
     prop.put("driver","com.mysql.jdbc.Driver") //表示驱动程序是com.mysql.jdbc.Driver
 
+
+
     // 指定监控的目录
-    val lines = ssc.textFileStream("file:///upload/source").map {
+    var testpath = "hdfs://master:9000/upload/source/"
+   // val lines = ssc.textFileStream("file:///upload/source")
+    val lines = ssc.textFileStream(testpath).map {
       x =>
         var data = x.split(",")
         RawDataRecord(data(0),data(1))
@@ -101,7 +109,7 @@ object Sqltest {
       testpredictionAndLabel.foreach(println)
       val rowRDD1 = testpredictionAndLabel.map(x => Row(x._1.toString,x._2.toString,x._3.toDouble))
       val resultFrame = sqlContext.createDataFrame(rowRDD1, schema)
-      resultFrame.write.mode("append").jdbc("jdbc:mysql://localhost:3306/hadoop?useSSL=false", "hadoop.spark_message", prop)
+      resultFrame.write.mode("append").jdbc("jdbc:mysql://master:3306/hadoop?useSSL=false&useUnicode=true&characterEncoding=utf8", "hadoop.spark_message", prop)
       //  println(testpredictionAndLabel.count())
    //   var testaccuracy = 1.0 * testpredictionAndLabel.filter(x => x._1 == x._2).count() / testDataRdd.count()
       println("output5：")
